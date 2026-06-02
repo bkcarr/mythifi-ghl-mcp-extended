@@ -6686,3 +6686,116 @@ export interface CreateInvoiceResponseDto extends DefaultInvoiceResponseDto {}
 export interface UpdateInvoiceResponseDto extends DefaultInvoiceResponseDto {}
 export interface DeleteInvoiceResponseDto extends DefaultInvoiceResponseDto {}
 export interface VoidInvoiceResponseDto extends DefaultInvoiceResponseDto {}
+
+// ===== BRAND BOARDS API V2 (2023-02-21) =====
+// Reference: https://marketplace.gohighlevel.com/docs/2023-02-21/ghl/brand-boards/
+// Brand Boards are sub-account-level design kits that bundle logos, colors, and fonts
+// for one-click application across emails, funnels, websites, forms, and payment links.
+
+/**
+ * Brand Board logo entry — up to 2 per board (typically primary + secondary)
+ */
+export interface GHLBrandBoardLogo {
+  url: string;
+  /** Optional name/label for the logo (e.g., "primary", "secondary", "dark", "light") */
+  name?: string;
+}
+
+/**
+ * Brand Board color entry — 2-10 per board, HEX format
+ */
+export interface GHLBrandBoardColor {
+  /** HEX color code, e.g., "#5B21B6" */
+  hex: string;
+  /** Optional name/label for the color (e.g., "primary", "accent") */
+  name?: string;
+}
+
+/**
+ * Brand Board font entry — 1-5 per board
+ */
+export interface GHLBrandBoardFont {
+  /** Font family name as recognized by GHL's font picker */
+  fontFamily: string;
+  /** Optional role/label for the font (e.g., "display", "body") */
+  name?: string;
+}
+
+/**
+ * Brand Board — complete resource shape returned by GHL API
+ */
+export interface GHLBrandBoard {
+  id: string;
+  locationId: string;
+  name: string;
+  logos?: GHLBrandBoardLogo[];
+  colors?: GHLBrandBoardColor[];
+  fonts?: GHLBrandBoardFont[];
+  isDefault?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Request body for POST /brand-boards/
+ */
+export interface GHLCreateBrandBoardRequest {
+  /** Required: the sub-account location to create the Brand Board in */
+  locationId: string;
+  /** Required: human-readable name */
+  name: string;
+  /** Up to 2 logos */
+  logos?: GHLBrandBoardLogo[];
+  /** 2-10 colors in HEX */
+  colors?: GHLBrandBoardColor[];
+  /** 1-5 fonts */
+  fonts?: GHLBrandBoardFont[];
+}
+
+/**
+ * Request body for PUT /brand-boards/{id}
+ * All fields optional — partial update supported
+ */
+export interface GHLUpdateBrandBoardRequest {
+  name?: string;
+  logos?: GHLBrandBoardLogo[];
+  colors?: GHLBrandBoardColor[];
+  fonts?: GHLBrandBoardFont[];
+}
+
+/**
+ * Response wrapper for list endpoint
+ */
+export interface GHLListBrandBoardsResponse {
+  brandBoards: GHLBrandBoard[];
+}
+
+// ===== MCP Tool param shapes for Brand Boards =====
+
+export interface MCPCreateBrandBoardParams {
+  locationId?: string;
+  name: string;
+  logos?: GHLBrandBoardLogo[];
+  colors?: GHLBrandBoardColor[];
+  fonts?: GHLBrandBoardFont[];
+}
+
+export interface MCPListBrandBoardsParams {
+  locationId?: string;
+}
+
+export interface MCPGetBrandBoardParams {
+  brandBoardId: string;
+}
+
+export interface MCPUpdateBrandBoardParams {
+  brandBoardId: string;
+  name?: string;
+  logos?: GHLBrandBoardLogo[];
+  colors?: GHLBrandBoardColor[];
+  fonts?: GHLBrandBoardFont[];
+}
+
+export interface MCPDeleteBrandBoardParams {
+  brandBoardId: string;
+}

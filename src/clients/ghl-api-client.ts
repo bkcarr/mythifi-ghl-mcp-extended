@@ -380,7 +380,11 @@ import {
   CreateInvoiceDto,
   CreateInvoiceResponseDto,
   ListInvoicesResponseDto,
-  AltDto
+  AltDto,
+  GHLBrandBoard,
+  GHLCreateBrandBoardRequest,
+  GHLUpdateBrandBoardRequest,
+  GHLListBrandBoardsResponse
 } from '../types/ghl-types.js';
 
 /**
@@ -6825,4 +6829,122 @@ export class GHLApiClient {
       throw error;
     }
   }
-} 
+
+  // ===== BRAND BOARDS API V2 (2023-02-21) =====
+  // Sub-account-level design kits — logos / colors / fonts — applied across
+  // emails, funnels, websites, forms, and payment links via one-click selection
+  // in their respective builders. Updates do NOT propagate retroactively to
+  // surfaces that already applied the Board.
+  // Reference: https://marketplace.gohighlevel.com/docs/2023-02-21/ghl/brand-boards/
+
+  /**
+   * Custom headers for Brand Boards API (uses 2023-02-21 version)
+   */
+  private getBrandBoardHeaders() {
+    return {
+      'Authorization': `Bearer ${this.config.accessToken}`,
+      'Version': '2023-02-21',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+  }
+
+  /**
+   * Create a new Brand Board
+   * POST /brand-boards/
+   */
+  async createBrandBoard(boardData: GHLCreateBrandBoardRequest): Promise<GHLApiResponse<GHLBrandBoard>> {
+    try {
+      const payload = {
+        ...boardData,
+        locationId: boardData.locationId || this.config.locationId
+      };
+
+      const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.post(
+        '/brand-boards/',
+        payload,
+        { headers: this.getBrandBoardHeaders() }
+      );
+
+      return this.wrapResponse(response.data.brandBoard);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * List Brand Boards for a location
+   * GET /brand-boards/
+   */
+  async listBrandBoards(locationId?: string): Promise<GHLApiResponse<GHLListBrandBoardsResponse>> {
+    try {
+      const resolvedLocationId = locationId || this.config.locationId;
+      const response: AxiosResponse<GHLListBrandBoardsResponse> = await this.axiosInstance.get(
+        '/brand-boards/',
+        {
+          headers: this.getBrandBoardHeaders(),
+          params: { locationId: resolvedLocationId }
+        }
+      );
+
+      return this.wrapResponse(response.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get a single Brand Board by ID
+   * GET /brand-boards/{brandBoardId}
+   */
+  async getBrandBoard(brandBoardId: string): Promise<GHLApiResponse<GHLBrandBoard>> {
+    try {
+      const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.get(
+        `/brand-boards/${brandBoardId}`,
+        { headers: this.getBrandBoardHeaders() }
+      );
+
+      return this.wrapResponse(response.data.brandBoard);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing Brand Board
+   * PUT /brand-boards/{brandBoardId}
+   */
+  async updateBrandBoard(
+    brandBoardId: string,
+    updates: GHLUpdateBrandBoardRequest
+  ): Promise<GHLApiResponse<GHLBrandBoard>> {
+    try {
+      const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.put(
+        `/brand-boards/${brandBoardId}`,
+        updates,
+        { headers: this.getBrandBoardHeaders() }
+      );
+
+      return this.wrapResponse(response.data.brandBoard);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a Brand Board
+   * DELETE /brand-boards/{brandBoardId}
+   */
+  async deleteBrandBoard(brandBoardId: string): Promise<GHLApiResponse<{ success: boolean }>> {
+    try {
+      const response: AxiosResponse<{ success: boolean }> = await this.axiosInstance.delete(
+        `/brand-boards/${brandBoardId}`,
+        { headers: this.getBrandBoardHeaders() }
+      );
+
+      return this.wrapResponse(response.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+}

@@ -12,6 +12,7 @@ import {
   McpError 
 } from '@modelcontextprotocol/sdk/types.js';
 import * as dotenv from 'dotenv';
+import * as path from 'path';
 
 import { GHLApiClient } from './clients/ghl-api-client';
 import { ContactTools } from './tools/contact-tools.js';
@@ -34,9 +35,13 @@ import { GHLConfig } from './types/ghl-types';
 import { ProductsTools } from './tools/products-tools.js';
 import { PaymentsTools } from './tools/payments-tools.js';
 import { InvoicesTools } from './tools/invoices-tools.js';
+import { BrandBoardTools, isBrandBoardTool } from './tools/brand-board-tools.js';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables — resolve .env relative to this file's directory
+// so the server works regardless of the cwd Claude Code spawns it from.
+// Compiled output lives in dist/, so .. takes us to the repo root.
+const envPath = path.resolve(__dirname, '..', '.env');
+dotenv.config({ path: envPath });
 
 /**
  * Main MCP Server class
@@ -63,6 +68,7 @@ class GHLMCPServer {
   private productsTools: ProductsTools;
   private paymentsTools: PaymentsTools;
   private invoicesTools: InvoicesTools;
+  private brandBoardTools: BrandBoardTools;
 
   constructor() {
     // Initialize MCP server with capabilities
@@ -101,6 +107,7 @@ class GHLMCPServer {
     this.productsTools = new ProductsTools(this.ghlClient);
     this.paymentsTools = new PaymentsTools(this.ghlClient);
     this.invoicesTools = new InvoicesTools(this.ghlClient);
+    this.brandBoardTools = new BrandBoardTools(this.ghlClient);
 
     // Setup MCP handlers
     this.setupHandlers();
@@ -163,6 +170,7 @@ class GHLMCPServer {
         const productsToolDefinitions = this.productsTools.getTools();
         const paymentsToolDefinitions = this.paymentsTools.getTools();
         const invoicesToolDefinitions = this.invoicesTools.getTools();
+        const brandBoardToolDefinitions = this.brandBoardTools.getTools();
         
         const allTools = [
           ...contactToolDefinitions,
@@ -183,7 +191,8 @@ class GHLMCPServer {
           ...storeToolDefinitions,
           ...productsToolDefinitions,
           ...paymentsToolDefinitions,
-          ...invoicesToolDefinitions
+          ...invoicesToolDefinitions,
+          ...brandBoardToolDefinitions
         ];
         
         process.stderr.write(`[GHL MCP] Registered ${allTools.length} tools total:\n`);
@@ -206,6 +215,7 @@ class GHLMCPServer {
         process.stderr.write(`[GHL MCP] - ${productsToolDefinitions.length} products tools\n`);
         process.stderr.write(`[GHL MCP] - ${paymentsToolDefinitions.length} payments tools\n`);
         process.stderr.write(`[GHL MCP] - ${invoicesToolDefinitions.length} invoices tools\n`);
+        process.stderr.write(`[GHL MCP] - ${brandBoardToolDefinitions.length} brand board tools\n`);
         
         return {
           tools: allTools
@@ -268,6 +278,8 @@ class GHLMCPServer {
           result = await this.paymentsTools.handleToolCall(name, args || {});
         } else if (this.isInvoicesTool(name)) {
           result = await this.invoicesTools.handleToolCall(name, args || {});
+        } else if (isBrandBoardTool(name)) {
+          result = await this.brandBoardTools.executeBrandBoardTool(name, args || {});
         } else {
           throw new Error(`Unknown tool: ${name}`);
         }
@@ -658,7 +670,8 @@ class GHLMCPServer {
       const productsToolCount = this.productsTools.getTools().length;
       const paymentsToolCount = this.paymentsTools.getTools().length;
       const invoicesToolCount = this.invoicesTools.getTools().length;
-      const totalTools = contactToolCount + conversationToolCount + blogToolCount + opportunityToolCount + calendarToolCount + emailToolCount + locationToolCount + emailISVToolCount + socialMediaToolCount + mediaToolCount + objectToolCount + associationToolCount + customFieldV2ToolCount + workflowToolCount + surveyToolCount + storeToolCount + productsToolCount + paymentsToolCount + invoicesToolCount;
+      const brandBoardToolCount = this.brandBoardTools.getTools().length;
+      const totalTools = contactToolCount + conversationToolCount + blogToolCount + opportunityToolCount + calendarToolCount + emailToolCount + locationToolCount + emailISVToolCount + socialMediaToolCount + mediaToolCount + objectToolCount + associationToolCount + customFieldV2ToolCount + workflowToolCount + surveyToolCount + storeToolCount + productsToolCount + paymentsToolCount + invoicesToolCount + brandBoardToolCount;
       
       process.stderr.write(`📋 Available tools: ${totalTools}\n`);
       process.stderr.write('\n');
