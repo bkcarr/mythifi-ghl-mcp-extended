@@ -6851,23 +6851,27 @@ export class GHLApiClient {
 
   /**
    * Create a new Brand Board
-   * POST /brand-boards/:locationId
+   * POST /brand-boards/
    *
-   * NB: locationId lives in the URL path, NOT the request body. The body
-   * carries only the Brand Board content (name + logos + colors + fonts).
+   * NB: GHL inconsistently routes Brand Boards — Create uses /brand-boards/
+   * (locationId in body), while List/Get/Update/Delete use /brand-boards/:locationId/.
+   * Don't normalize these; they're asymmetric by GHL design.
    */
   async createBrandBoard(boardData: GHLCreateBrandBoardRequest): Promise<GHLApiResponse<GHLBrandBoard>> {
     try {
-      const resolvedLocationId = boardData.locationId || this.config.locationId;
-      const { locationId: _drop, ...bodyPayload } = boardData;
+      const payload = {
+        ...boardData,
+        locationId: boardData.locationId || this.config.locationId
+      };
 
-      const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.post(
-        `/brand-boards/${resolvedLocationId}`,
-        bodyPayload,
+      const response: AxiosResponse<any> = await this.axiosInstance.post(
+        '/brand-boards/',
+        payload,
         { headers: this.getBrandBoardHeaders() }
       );
 
-      return this.wrapResponse(response.data.brandBoard);
+      const board = response.data?.brandBoard ?? response.data;
+      return this.wrapResponse(board as GHLBrandBoard);
     } catch (error) {
       throw error;
     }
@@ -6876,6 +6880,8 @@ export class GHLApiClient {
   /**
    * List Brand Boards for a location
    * GET /brand-boards/:locationId
+   *
+   * Response shape: { brandBoards: [...], totalCount: N, traceId: "..." }
    */
   async listBrandBoards(locationId?: string): Promise<GHLApiResponse<GHLListBrandBoardsResponse>> {
     try {
@@ -6894,16 +6900,21 @@ export class GHLApiClient {
   /**
    * Get a single Brand Board by ID
    * GET /brand-boards/:locationId/:brandBoardId
+   *
+   * NB: GHL returns the Brand Board fields directly (NOT wrapped in
+   * { brandBoard: {...} }). Response includes _id, name, colors, fonts, logos,
+   * meta, default, folderId, createdAt, updatedAt.
    */
   async getBrandBoard(brandBoardId: string, locationId?: string): Promise<GHLApiResponse<GHLBrandBoard>> {
     try {
       const resolvedLocationId = locationId || this.config.locationId;
-      const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.get(
+      const response: AxiosResponse<any> = await this.axiosInstance.get(
         `/brand-boards/${resolvedLocationId}/${brandBoardId}`,
         { headers: this.getBrandBoardHeaders() }
       );
 
-      return this.wrapResponse(response.data.brandBoard);
+      const board = response.data?.brandBoard ?? response.data;
+      return this.wrapResponse(board as GHLBrandBoard);
     } catch (error) {
       throw error;
     }
@@ -6922,13 +6933,14 @@ export class GHLApiClient {
   ): Promise<GHLApiResponse<GHLBrandBoard>> {
     try {
       const resolvedLocationId = locationId || this.config.locationId;
-      const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.patch(
+      const response: AxiosResponse<any> = await this.axiosInstance.patch(
         `/brand-boards/${resolvedLocationId}/${brandBoardId}`,
         updates,
         { headers: this.getBrandBoardHeaders() }
       );
 
-      return this.wrapResponse(response.data.brandBoard);
+      const board = response.data?.brandBoard ?? response.data;
+      return this.wrapResponse(board as GHLBrandBoard);
     } catch (error) {
       throw error;
     }
