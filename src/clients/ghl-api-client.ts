@@ -6851,18 +6851,19 @@ export class GHLApiClient {
 
   /**
    * Create a new Brand Board
-   * POST /brand-boards/
+   * POST /brand-boards/:locationId
+   *
+   * NB: locationId lives in the URL path, NOT the request body. The body
+   * carries only the Brand Board content (name + logos + colors + fonts).
    */
   async createBrandBoard(boardData: GHLCreateBrandBoardRequest): Promise<GHLApiResponse<GHLBrandBoard>> {
     try {
-      const payload = {
-        ...boardData,
-        locationId: boardData.locationId || this.config.locationId
-      };
+      const resolvedLocationId = boardData.locationId || this.config.locationId;
+      const { locationId: _drop, ...bodyPayload } = boardData;
 
       const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.post(
-        '/brand-boards/',
-        payload,
+        `/brand-boards/${resolvedLocationId}`,
+        bodyPayload,
         { headers: this.getBrandBoardHeaders() }
       );
 
@@ -6874,17 +6875,14 @@ export class GHLApiClient {
 
   /**
    * List Brand Boards for a location
-   * GET /brand-boards/
+   * GET /brand-boards/:locationId
    */
   async listBrandBoards(locationId?: string): Promise<GHLApiResponse<GHLListBrandBoardsResponse>> {
     try {
       const resolvedLocationId = locationId || this.config.locationId;
       const response: AxiosResponse<GHLListBrandBoardsResponse> = await this.axiosInstance.get(
-        '/brand-boards/',
-        {
-          headers: this.getBrandBoardHeaders(),
-          params: { locationId: resolvedLocationId }
-        }
+        `/brand-boards/${resolvedLocationId}`,
+        { headers: this.getBrandBoardHeaders() }
       );
 
       return this.wrapResponse(response.data);
@@ -6895,12 +6893,13 @@ export class GHLApiClient {
 
   /**
    * Get a single Brand Board by ID
-   * GET /brand-boards/{brandBoardId}
+   * GET /brand-boards/:locationId/:brandBoardId
    */
-  async getBrandBoard(brandBoardId: string): Promise<GHLApiResponse<GHLBrandBoard>> {
+  async getBrandBoard(brandBoardId: string, locationId?: string): Promise<GHLApiResponse<GHLBrandBoard>> {
     try {
+      const resolvedLocationId = locationId || this.config.locationId;
       const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.get(
-        `/brand-boards/${brandBoardId}`,
+        `/brand-boards/${resolvedLocationId}/${brandBoardId}`,
         { headers: this.getBrandBoardHeaders() }
       );
 
@@ -6912,15 +6911,19 @@ export class GHLApiClient {
 
   /**
    * Update an existing Brand Board
-   * PUT /brand-boards/{brandBoardId}
+   * PATCH /brand-boards/:locationId/:brandBoardId
+   *
+   * NB: GHL uses PATCH (not PUT) for Brand Board updates.
    */
   async updateBrandBoard(
     brandBoardId: string,
-    updates: GHLUpdateBrandBoardRequest
+    updates: GHLUpdateBrandBoardRequest,
+    locationId?: string
   ): Promise<GHLApiResponse<GHLBrandBoard>> {
     try {
-      const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.put(
-        `/brand-boards/${brandBoardId}`,
+      const resolvedLocationId = locationId || this.config.locationId;
+      const response: AxiosResponse<{ brandBoard: GHLBrandBoard }> = await this.axiosInstance.patch(
+        `/brand-boards/${resolvedLocationId}/${brandBoardId}`,
         updates,
         { headers: this.getBrandBoardHeaders() }
       );
@@ -6933,12 +6936,13 @@ export class GHLApiClient {
 
   /**
    * Delete a Brand Board
-   * DELETE /brand-boards/{brandBoardId}
+   * DELETE /brand-boards/:locationId/:brandBoardId
    */
-  async deleteBrandBoard(brandBoardId: string): Promise<GHLApiResponse<{ success: boolean }>> {
+  async deleteBrandBoard(brandBoardId: string, locationId?: string): Promise<GHLApiResponse<{ success: boolean }>> {
     try {
+      const resolvedLocationId = locationId || this.config.locationId;
       const response: AxiosResponse<{ success: boolean }> = await this.axiosInstance.delete(
-        `/brand-boards/${brandBoardId}`,
+        `/brand-boards/${resolvedLocationId}/${brandBoardId}`,
         { headers: this.getBrandBoardHeaders() }
       );
 
